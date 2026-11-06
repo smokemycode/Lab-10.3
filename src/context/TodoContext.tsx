@@ -93,7 +93,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: "EDIT", id, title });
     }, []);
 
-    const clearCompleted = useCallback((task: Task) => {
+    const clearCompleted = useCallback(() => {
         dispatch({ type: "CLEAR_DONE" });
     }, []);
 
