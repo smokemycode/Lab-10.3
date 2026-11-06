@@ -1,4 +1,4 @@
-// Instead of Prop drilling themes will live here so any component can read and change without props.
+// Instead of Prop drilling themes, will live here so any component can read and change without props.
 import { createContext, useContext, useState, useEffect } from "react";
 import type { Theme } from "../types"
 
