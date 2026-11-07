@@ -1,5 +1,5 @@
 // Instead of Prop drilling themes, will live here so any component can read and change without props.
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from "react";
 import type { Theme } from "../types"
 
 // What the context provides
@@ -19,7 +19,7 @@ function loadTheme(): Theme {
 }
 
 // Makes the theme available everywhere
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
     // Only ran once on first render
     const [theme, setTheme] = useState<Theme>(loadTheme);
 
@@ -30,12 +30,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, [theme]);
 
     // Flip light <-> dark
-    const toggleTheme = () => {
+    const toggleTheme = useCallback(() => {
         setTheme((prev) => (prev === "light" ? "dark" : "light"));
-    };
+    }, []);
 
     // Everything together we want to share
-    const value: ThemeContextValue = { theme, toggleTheme, setTheme };
+    const value = useMemo(
+  () => ({ theme, toggleTheme, setTheme }),
+  [theme, toggleTheme, setTheme]
+);
 
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
