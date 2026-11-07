@@ -1,13 +1,7 @@
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Task, TaskStatus } from "../../types";
 import { formatDate, isOverdue } from "../../utils/taskUtils";
-
-// Props: task to display, plus callbacks for status change and delete.
-interface TaskItemProps {
-	task: Task;
-	onUpdateStatus: (id: string, status: TaskStatus) => void;
-	onDelete: (id: string) => void;
-}
+import { useTodo } from "../../context/TodoContext";
 
 // Lookup table: priority -> Tailwind classes so the TSX is cleaner.
 const priorityColors: Record<string, string> = {
@@ -17,12 +11,9 @@ const priorityColors: Record<string, string> = {
 	low: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200",
 };
 
-export default function TaskItem({
-	task,
-	onUpdateStatus,
-	onDelete,
-}: TaskItemProps) {
+export default function TaskItem({ task }: { task: Task}) {
 	const overdue = isOverdue(task); // Compute once per render.
+	const { updateStatus, deleteTask } = useTodo();
 
 	return (
 		<div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow flex flex-col gap-2 transition-colors border-l-4 border-blue-500">
@@ -42,7 +33,7 @@ export default function TaskItem({
 					)}
 				</div>
 				<button
-					onClick={() => onDelete(task.id)}
+					onClick={() => deleteTask(task.id)}
 					className="text-slate-400 hover:text-red-500 transition-colors p-1"
 					aria-label="Delete task"> {/* Arrow fn so we can pass id. */}
 					<TrashIcon className="w-5 h-5" />
@@ -60,7 +51,7 @@ export default function TaskItem({
 				<select
 					value={task.status}
 					onChange={(e) =>
-						onUpdateStatus(task.id, e.target.value as TaskStatus)
+						updateStatus(task.id, e.target.value as TaskStatus)
 					}
 					className="px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">
 					<option value="todo">To Do</option>

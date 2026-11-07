@@ -1,12 +1,7 @@
 import { useState } from "react";
 import type { Task, TaskFormData } from "../../types";
-import { validateTaskForm } from "../../utils/taskUtils";
-
-// Props: onAdd fires when a valid task is submitted; generateId is passed in so we don't import utils directly.
-interface TaskFormProps {
-	onAdd: (task: Task) => void;
-	generateId: () => string;
-}
+import { validateTaskForm, generateId } from "../../utils/taskUtils";
+import { useTodo } from "../../context/TodoContext";
 
 // Blank form values — used at first load and to reset after submit.
 const emptyFormData: TaskFormData = {
@@ -17,10 +12,11 @@ const emptyFormData: TaskFormData = {
 	dueDate: "",
 };
 
-export default function TaskForm({ onAdd, generateId }: TaskFormProps) {
+export default function TaskForm() {
 	const [form, setForm] = useState<TaskFormData>(emptyFormData); // What the user typed.
 	const [errors, setErrors] = useState<Record<string, string>>({}); // Validation messages per field.
 	const [submitted, setSubmitted] = useState(false); // Only show errors AFTER first submit attempt.
+	const { addTask } = useTodo();
 
 	// One handler for every input — uses `name` to know which field to update.
 	function handleChange(
@@ -41,7 +37,7 @@ export default function TaskForm({ onAdd, generateId }: TaskFormProps) {
 		setErrors(validation);
 		if (Object.keys(validation).length > 0) return; // Exit if any errors.
 
-		onAdd({
+		addTask({
 			...form,
 			id: generateId(),
 			createdAt: new Date().toISOString(),

@@ -1,27 +1,18 @@
 import { useState, useMemo } from "react";
 import type { SortOption } from "../../types";
-import { filterTasks, sortTasks, generateId } from "../../utils/taskUtils";
 import TaskForm from "../TaskForm/TaskForm";
 import TaskFilter from "../TaskFilter/TaskFilter";
 import TaskList from "../TaskList/TaskList";
 import { useTodo } from "../../context/TodoContext";
-import { useFilter, defaultFilters } from "../../context/FilterContext";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function Dashboard() {
     // GET FROM CONTEXT
-    const { tasks, addTask, updateStatus, deleteTask, setAllTasks } = useTodo();
-    const { filters, setFilters } = useFilter();
+    const { tasks, setAllTasks } = useTodo();
     const { theme, setTheme } = useTheme();
 
     // This is local, only TaskList uses it
     const [sortBy, setSortBy] = useState<SortOption>("created-desc");
-
-    // Filter then sort tasks
-    const visibleTasks = useMemo(
-        () => sortTasks(filterTasks(tasks, filters), sortBy),
-        [tasks, filters, sortBy]
-    );
 
     // Stats
     const stats = useMemo(() => {
@@ -124,26 +115,15 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left column: form + filters. */}
           <div className="lg:col-span-1 space-y-4">
-            <TaskForm onAdd={addTask} generateId={generateId} />
-            <TaskFilter
-              filters={filters}
-              onFilterChange={setFilters}
-              onClear={() => setFilters(defaultFilters)}
-            />
+            <TaskForm />
+            <TaskFilter />
           </div>
 
           {/* Right column: the task list. */}
           <div className="lg:col-span-2">
             <TaskList
-              tasks={visibleTasks}
               sortBy={sortBy}
               onSortChange={setSortBy}
-              search={filters.search}
-              onSearchChange={(value) =>
-                setFilters({ ...filters, search: value })
-              }
-              onUpdateStatus={updateStatus}
-              onDelete={deleteTask}
             />
           </div>
         </div>

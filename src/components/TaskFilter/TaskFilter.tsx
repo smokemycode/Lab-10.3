@@ -1,19 +1,9 @@
 import type { FilterOptions } from "../../types";
+import { useFilter, defaultFilters } from "../../context/FilterContext";
 
-// Props: read current filters, send new ones up, and a shortcut for "Clear"
-interface TaskFilterProps {
-    filters: FilterOptions;
-    onFilterChange: (filters: FilterOptions) => void;
-    onClear: () => void;
-}
-
-export default function TaskFilter({
-    filters,
-    onFilterChange,
-    onClear,
-}: TaskFilterProps) {
-    const hasActiveFilters = 
-    filters.status !== 'all' || filters.priority !== "all"; // Show clear button only when something is filtered
+export default function TaskFilter() {
+  const { filters, setFilters } = useFilter();
+  const hasActiveFilters = filters.status !== "all" || filters.priority !== "all";
 
     return (
         <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow space-y-2 transition-colors">
@@ -23,7 +13,7 @@ export default function TaskFilter({
         </h3>
         {hasActiveFilters && (
           <button
-            onClick={onClear}
+            onClick={() => setFilters(defaultFilters)}
             className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Clear filters
@@ -40,7 +30,7 @@ export default function TaskFilter({
           <select
             value={filters.status}
             onChange={(e) =>
-              onFilterChange({
+              setFilters({
                 ...filters,
                 status: e.target.value as FilterOptions["status"],
               })
@@ -62,7 +52,7 @@ export default function TaskFilter({
           <select
             value={filters.priority}
             onChange={(e) =>
-              onFilterChange({
+              setFilters({
                 ...filters,
                 priority: e.target.value as FilterOptions["priority"],
               })
