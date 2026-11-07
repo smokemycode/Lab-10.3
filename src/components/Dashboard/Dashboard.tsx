@@ -1,69 +1,36 @@
-import { useState, useMemo, useEffect } from "react";
-import type { FilterOptions, SortOption, Task, TaskStatus, Theme } from "../../types";
-import { filterTasks, generateId, sortTasks } from "../../utils/taskUtils";
+import { useState, useMemo } from "react";
+import type { SortOption } from "../../types";
+import { filterTasks, sortTasks, generateId } from "../../utils/taskUtils";
 import TaskForm from "../TaskForm/TaskForm";
 import TaskFilter from "../TaskFilter/TaskFilter";
 import TaskList from "../TaskList/TaskList";
-
-const STORAGE_KEY = "task-dashboard-tasks"; // localStorage key for tasks
-const THEME_KEY = "task-dashboard-theme"; // localStorage key for theme
-
-const defaultFilters: FilterOptions = {
-    status: "all",
-    priority: "all",
-    search: "",
-}; // Used at load and on "Clear"
-
-// Read tasks from localStorage, return empty array if none or invalid
-function loadTasks(): Task[] {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
-}
-
-// Read theme from localStorage, default to light if none or invalid
-function loadTheme(): Theme {
-    const saved = localStorage.getItem(THEME_KEY);
-    return saved === "dark" ? "dark" : "light";
-}
+import { useTodo } from "../../context/TodoContext";
+import { useFilter, defaultFilters } from "../../context/FilterContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function Dashboard() {
-    // Dashboard own ALL the state, and passes down to children as props
-    const [tasks, setTasks] = useState<Task[]>(loadTasks);
-    const [filters, setFilters] = useState<FilterOptions>(defaultFilters);
+    // GET FROM CONTEXT
+    const { tasks, addTask, updateStatus, deleteTask, setAllTasks } = useTodo();
+    const { filters, setFilters } = useFilter();
+    const { theme, setTheme } = useTheme();
+
+    // This is local, only TaskList uses it
     const [sortBy, setSortBy] = useState<SortOption>("created-desc");
-    const [theme, setTheme] = useState<Theme>(loadTheme);
 
-    // Save tasks to localStorage whenever they change
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    // Filter then sort tasks
+    const visibleTasks = useMemo(
+        () => sortTasks(filterTasks(tasks, filters), sortBy),
+        [tasks, filters, sortBy]
+    );
+
+    // Stats
+    const stats = useMemo(() => {
+        const total = tasks.length;
+        const done = tasks.filter((t) => t.status === "done").length;
+        const inProgress = tasks.filter((t) => t.status === "in-progress").length;
+        const todo = tasks.filter((t) => t.status === "todo").length;
+        return { total, done, inProgress, todo };
     }, [tasks]);
-
-    // Save theme and apply to <html> element
-    useEffect(() => {
-        localStorage.setItem(THEME_KEY, theme);
-        document.documentElement.classList.toggle("dark", theme === "dark");
-    }, [theme]);
-
-    // Add a new task to the list
-    function addTask(task: Task) {
-        setTasks((prev) => [task, ...prev]);
-    }
-
-    // Update task status (e.g., from "todo" to "done")
-    function updateStatus(id: string, status: TaskStatus) {
-        setTasks((prev) => prev.map((task) => (task.id === id ? { ...task, status } : task)));
-    }
-
-    // Delete a task by id
-    function deleteTask(id: string) {
-        setTasks((prev) => prev.filter((task) => task.id !== id));
-    }
 
     // Export tasks to a JSON file
     function exportData() {
@@ -84,7 +51,9 @@ export default function Dashboard() {
         reader.onload = (event) => {
             try {
                 const imported = JSON.parse(event.target?.result as string);
-                if (Array.isArray(imported)) setTasks(imported);
+                if (Array.isArray(imported)) {
+                  setAllTasks(imported);
+                }
             } catch {
                 alert("Invalid file.");
             }
@@ -92,21 +61,6 @@ export default function Dashboard() {
         reader.readAsText(file);
         e.target.value = ""; // Reset the input so the same file can be selected again
     }
-
-    // Filter then sort tasks
-    const visibleTasks = useMemo(
-        () => sortTasks(filterTasks(tasks, filters), sortBy),
-        [tasks, filters, sortBy]
-    );
-
-    // Stats
-    const stats = useMemo(() => {
-        const total = tasks.length;
-        const done = tasks.filter((t) => t.status === "done").length;
-        const inProgress = tasks.filter((t) => t.status === "in-progress").length;
-        const todo = tasks.filter((t) => t.status === "todo").length;
-        return { total, done, inProgress, todo };
-    }, [tasks]);
 
     return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900 p-4 transition-colors">

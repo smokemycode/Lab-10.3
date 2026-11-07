@@ -26,7 +26,8 @@ type TodoAction =
     | { type: "UPDATE_STATUS"; id: string; status: TaskStatus }
     | { type: "DELETE"; id: string; }
     | { type: "EDIT"; id: string; title: string }
-    | { type: "CLEAR_DONE" };
+    | { type: "CLEAR_DONE" }
+    | { type: "SET_ALL"; tasks: Task[] };
 
 function todoReducer(state: Task[], action: TodoAction): Task[] {
     switch (action.type) {
@@ -49,6 +50,10 @@ function todoReducer(state: Task[], action: TodoAction): Task[] {
         case "CLEAR_DONE":
             // Keep only tasks that aren't done
             return state.filter((task) => task.status !== "done");
+        
+        case "SET_ALL":
+            // Replaces the whole list.
+            return action.tasks;
 
         default:
             return state;
@@ -63,6 +68,7 @@ interface TodoContextValue {
     deleteTask: (id: string) => void;
     editTask: (id: string, title: string) => void;
     clearCompleted: () => void;
+    setAllTasks: (tasks: Task[]) => void;
 }
 
 const TodoContext = createContext<TodoContextValue | null>(null);
@@ -97,8 +103,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: "CLEAR_DONE" });
     }, []);
 
+    const setAllTasks = useCallback((tasjs: Task[]) => {
+        dispatch({ type: "SET_ALL", tasks });
+    }, []);
+
     // Only re-render unless tasks or one of the actions change
-    const value = useMemo<TodoContextValue>(() => ({ tasks, addTask, updateStatus, deleteTask, editTask, clearCompleted}), [tasks, updateStatus, deleteTask, editTask, clearCompleted]);
+    const value = useMemo<TodoContextValue>(() => ({ tasks, addTask, updateStatus, deleteTask, editTask, clearCompleted, setAllTasks }), [tasks, updateStatus, deleteTask, editTask, clearCompleted, setAllTasks]);
 
     return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
 }
