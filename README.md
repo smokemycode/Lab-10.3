@@ -1,32 +1,36 @@
-# React + TypeScript + Vite
+# Task Dashboard — Context API Refactor
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React + TypeScript + Tailwind Todo/Task dashboard. Originally built with **prop drilling** — one `Dashboard` component owned all the state and passed everything down. This lab refactored it to use **React Context API** so any component can read and update shared state directly.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Add, edit, delete tasks with title, description, priority, and due date
+- Change task status inline (To Do → In Progress → Done)
+- Filter by status and priority
+- Search tasks by title or description
+- Sort by created date, priority, due date, or title
+- Toggle light/dark theme (saved to localStorage)
+- Export tasks to JSON, import them back in
+- Clear all completed tasks in one click
+- **Persistence**: tasks and theme survive page refreshes
 
-## React Compiler
+## How the refactor works
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Three contexts, each with its own job:
 
-## Expanding the Oxlint configuration
+| Context | What it holds | Who uses it |
+|---|---|---|
+| `ThemeContext` | `theme` (light/dark) + `toggleTheme` | `Dashboard` (header button) |
+| `FilterContext` | `filters` (status/priority/search) + `setFilters` | `TaskFilter`, `TaskList` |
+| `TodoContext` | `tasks` + all actions (add/edit/delete/update status/clear done/replace all) | `TaskForm`, `TaskItem`, `TaskList`, `Dashboard` |
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+`AppProviders.tsx` stacks the three providers so `App.tsx` stays tiny
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+## What I learned
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- Prop drilling becomes painful fast. The original `Dashboard` was passing 7+ props to `TaskList` alone. Context turned that into one hook call.
+- Contexts aren't a dumping ground. `sortBy` stays local because only one component writes it and one component reads it — moving it to context wouldn't remove any prop drilling. Contexts are for state multiple, unrelated components need.
+- Rules of hooks are real. Calling `useTodo()` inside an event handler breaks the app. Hooks go at the top of the component, always.
+- `useCallback` isn't decoration. Without it, `useMemo` on the value object would re-create on every render, defeating its own purpose.
+- Syntax errors are 90% mismatched brackets. When Vite says "expected `,` or `)"` — count the parens. The error message is usually one character away from the fix.
+
