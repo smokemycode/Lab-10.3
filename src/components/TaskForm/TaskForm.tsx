@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Task, TaskFormData } from "../../types";
+import type { TaskFormData } from "../../types";
 import { validateTaskForm, generateId } from "../../utils/taskUtils";
 import { useTodo } from "../../context/TodoContext";
 
